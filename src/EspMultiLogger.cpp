@@ -22,3 +22,7 @@ size_t EspMultiLogger::write(uint8_t c) {
   }
   return 1;
 }
+
+void setLogLevel(LogLevel){
+    mLevel = level;
+}
