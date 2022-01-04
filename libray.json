@@ -1,0 +1,9 @@
+{
+    "name": "EspMultiLogger",
+    	"version": "0.0.0",
+    "repository":
+    {
+     "type": "git",
+     "url": "https://github.com/fischerboot/EspMultiLogger.git"
+    }
+}
