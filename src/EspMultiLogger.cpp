@@ -29,12 +29,29 @@ size_t EspMultiLogger::write(uint8_t c) {
     mBuffer[mBufferPos] = 0;
     // send line to logger
     Serial.println((const char *) mBuffer);
+    // send line to telnet
+    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
+    {
+      if (TelnetClient[i] || TelnetClient[i].connected())
+      {
+        TelnetClient[i].println((const char *)mBuffer);
+      }
+    }
+  delay(10);  // to avoid strange characters left in buffer
     mBufferPos = 0;
   }else if(mBufferPos == BUFFER_SIZE - 1){
     // add a null terminating byte to the buffer
     mBuffer[mBufferPos] = 0;
     // send the message to logger
     Serial.print((const char *) mBuffer);
+    //send message to telnet
+    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
+    {
+      if (TelnetClient[i] || TelnetClient[i].connected())
+      {
+        TelnetClient[i].print((const char *)mBuffer);
+      }
+    }
     mBufferPos = 0;
   } 
   else {
