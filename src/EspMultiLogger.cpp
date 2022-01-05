@@ -69,7 +69,7 @@ void EspMultiLogger::setLogLevel(LogLevel level){
 void EspMultiLogger::initLogger(){
   // todo generic implementation for init
   // tood check if Serial was already initialized
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   TelnetServer.begin();
   TelnetServer.setNoDelay(true);
@@ -111,9 +111,9 @@ void EspMultiLogger::loopLogger(){
         
         TelnetClient[i].print("Free Heap RAM: ");
         TelnetClient[i].println(ESP.getFreeHeap());
-        // todo find generic solution
-        //TelnetClient[i].print("Version: ");
-        //TelnetClient[i].println(versionStr);
+
+        TelnetClient[i].print("ESPMultiLogger Version: ");
+        TelnetClient[i].println("0.0.3"); // todo automate this with json.
         
         TelnetClient[i].println("----------------------------------------------------------------");
         
@@ -144,8 +144,9 @@ void EspMultiLogger::loopLogger(){
         //get data from the telnet client
         while(TelnetClient[i].available())
         {
-          // todo add remote loglevel parser
-          // Serial.write(TelnetClient[i].read());
+          // todo add remote loglevel parser 
+          // uncommenting this command result in a crash!
+          Serial.write(TelnetClient[i].read());
         }
       }
     }
