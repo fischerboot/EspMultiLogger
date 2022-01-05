@@ -1,6 +1,7 @@
 {
     "name": "EspMultiLogger",
     "version": "0.0.1",
+    "owner": "None",
     "repository":
     {
      "type": "git",
