@@ -21,9 +21,10 @@ class EspMultiLogger: public Print  {
     int mBufferPos;
     
   public:
+    static void initLogger();
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
-    setLogLevel(LogLevel);
+    void setLogLevel(LogLevel);
 };
 
 #endif
