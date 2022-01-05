@@ -1,6 +1,22 @@
 // inspired from https://github.com/atomic14/ESP32RemoteLogging
 #include <Arduino.h>
 #include "EspMultiLogger.h"
+
+
+#define LoggingWithTimeout
+
+#ifdef LoggingWithTimeout
+#define logTimeout (1800) // 60 min * 60sec = 1 std
+#endif 
+
+#define MAX_TELNET_CLIENTS 2
+
+const uint16_t TelnetPort = 23;
+uint8_t i;
+bool ConnectionEstablished; // Flag for successfully handled connection
+WiFiServer TelnetServer(TelnetPort);
+WiFiClient TelnetClient[MAX_TELNET_CLIENTS];
+
 EspMultiLogger::EspMultiLogger(LogLevel level) {
   mLevel = level;
   mBufferPos = 0;
@@ -37,4 +53,84 @@ void EspMultiLogger::initLogger(){
   // todo generic implementation for init
   // tood check if Serial was already initialized
   Serial.begin(115200);
+
+  TelnetServer.begin();
+  TelnetServer.setNoDelay(true);
+}
+
+void EspMultiLogger::loopLogger(){
+  // todo generic implementation for loop
+   // Cleanup disconnected session
+  for(i = 0; i < MAX_TELNET_CLIENTS; i++)
+  {
+    if (TelnetClient[i] && !TelnetClient[i].connected())
+    {
+      Serial.print("Client disconnected ... terminate session "); Serial.println(i+1); 
+      TelnetClient[i].stop();
+    }
+  }
+  
+  // Check new client connections
+  if (TelnetServer.hasClient())
+  {
+    ConnectionEstablished = false; // Set to false
+    
+    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
+    {
+      // Serial.print("Checking telnet session "); Serial.println(i+1);
+      
+      // find free socket
+      if (!TelnetClient[i])
+      {
+        TelnetClient[i] = TelnetServer.available(); 
+        
+        Serial.print("New Telnet client connected to session "); Serial.println(i+1);
+        
+        TelnetClient[i].flush();  // clear input buffer, else you get strange characters
+        TelnetClient[i].println("Welcome!");
+        
+        TelnetClient[i].print("Millis since start: ");
+        TelnetClient[i].println(millis());
+        
+        TelnetClient[i].print("Free Heap RAM: ");
+        TelnetClient[i].println(ESP.getFreeHeap());
+        // todo find generic solution
+        //TelnetClient[i].print("Version: ");
+        //TelnetClient[i].println(versionStr);
+        
+        TelnetClient[i].println("----------------------------------------------------------------");
+        
+        ConnectionEstablished = true; 
+        
+        break;
+      }
+      else
+      {
+        // Serial.println("Session is in use");
+      }
+    }
+
+    if (ConnectionEstablished == false)
+    {
+      Serial.println("No free sessions ... drop connection");
+      TelnetServer.available().stop();
+      // TelnetMsg("An other user cannot connect ... MAX_TELNET_CLIENTS limit is reached!");
+    }
+  }
+
+  for(i = 0; i < MAX_TELNET_CLIENTS; i++)
+  {
+    if (TelnetClient[i] && TelnetClient[i].connected())
+    {
+      if(TelnetClient[i].available())
+      { 
+        //get data from the telnet client
+        while(TelnetClient[i].available())
+        {
+          // todo add remote loglevel parser
+          // Serial.write(TelnetClient[i].read());
+        }
+      }
+    }
+  }
 }
