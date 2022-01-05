@@ -5,7 +5,7 @@
     {
      "type": "git",
      "url": "https://github.com/fischerboot/EspMultiLogger.git"
-    }
+    },
     "frameworks": "espidf",
     "platforms": "*",
     "includeDir": ".",
