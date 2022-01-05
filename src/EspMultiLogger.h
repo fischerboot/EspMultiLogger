@@ -13,18 +13,18 @@ enum LogLevel {
 
 #define BUFFER_SIZE 200
 
-class EspMultiLogger: public Print  {
+class EspMultiLogger: public Print {
   private:
     LogLevel mLevel;
-
     uint8_t mBuffer[BUFFER_SIZE];
     int mBufferPos;
     
   public:
+
     static void initLogger();
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
-    void setLogLevel(LogLevel);
+    void setLogLevel(LogLevel level);
 };
 
 #endif

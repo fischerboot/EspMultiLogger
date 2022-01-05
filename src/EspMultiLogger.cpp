@@ -1,9 +1,6 @@
 // inspired from https://github.com/atomic14/ESP32RemoteLogging
-
-#include "EspMultiLogger.h"
-
 #include <Arduino.h>
-
+#include "EspMultiLogger.h"
 EspMultiLogger::EspMultiLogger(LogLevel level) {
   mLevel = level;
   mBufferPos = 0;
@@ -32,11 +29,11 @@ size_t EspMultiLogger::write(uint8_t c) {
   return 1;
 }
 
-void setLogLevel(LogLevel){
+void EspMultiLogger::setLogLevel(LogLevel level){
     mLevel = level;
 }
 
-static void initLogger(){
+void EspMultiLogger::initLogger(){
   // todo generic implementation for init
   // tood check if Serial was already initialized
   Serial.begin(115200);
