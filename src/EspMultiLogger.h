@@ -18,13 +18,14 @@ class EspMultiLogger: public Print {
     LogLevel mLevel;
     uint8_t mBuffer[BUFFER_SIZE];
     int mBufferPos;
+    static inline LogLevel AllLevel; 
   public:
-
     static void initLogger();
     static void loopLogger();
+    static void setLogLevel(LogLevel level);
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
-    void setLogLevel(LogLevel level);
+
 };
 
 #endif

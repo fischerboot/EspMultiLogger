@@ -23,47 +23,51 @@ EspMultiLogger::EspMultiLogger(LogLevel level) {
 }
 
 size_t EspMultiLogger::write(uint8_t c) {
+  // only print if the instance loglevel is lower or equal than the overall loglevel.
+  if(mLevel<=AllLevel){
+  //  if(true){
   // check to see if we've reached the end of our buffer or received a newline character
-  if (c == '\n' ) {
-    // add a null terminating byte to the buffer
-    mBuffer[mBufferPos] = 0;
-    // send line to logger
-    Serial.println((const char *) mBuffer);
-    // send line to telnet
-    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-    {
-      if (TelnetClient[i] || TelnetClient[i].connected())
+    if (c == '\n' ) {
+      // add a null terminating byte to the buffer
+      mBuffer[mBufferPos] = 0;
+      // send line to logger
+      Serial.println((const char *) mBuffer);
+      // send line to telnet
+      for(i = 0; i < MAX_TELNET_CLIENTS; i++)
       {
-        TelnetClient[i].println((const char *)mBuffer);
+        if (TelnetClient[i] || TelnetClient[i].connected())
+        {
+          TelnetClient[i].println((const char *)mBuffer);
+        }
       }
-    }
-  delay(10);  // to avoid strange characters left in buffer
-    mBufferPos = 0;
-  }else if(mBufferPos == BUFFER_SIZE - 1){
-    // add a null terminating byte to the buffer
-    mBuffer[mBufferPos] = 0;
-    // send the message to logger
-    Serial.print((const char *) mBuffer);
-    //send message to telnet
-    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-    {
-      if (TelnetClient[i] || TelnetClient[i].connected())
+    delay(10);  // to avoid strange characters left in buffer
+      mBufferPos = 0;
+    }else if(mBufferPos == BUFFER_SIZE - 1){
+      // add a null terminating byte to the buffer
+      mBuffer[mBufferPos] = 0;
+      // send the message to logger
+      Serial.print((const char *) mBuffer);
+      //send message to telnet
+      for(i = 0; i < MAX_TELNET_CLIENTS; i++)
       {
-        TelnetClient[i].print((const char *)mBuffer);
+        if (TelnetClient[i] || TelnetClient[i].connected())
+        {
+          TelnetClient[i].print((const char *)mBuffer);
+        }
       }
+      mBufferPos = 0;
+    } 
+    else {
+      // buffer the character up for sending later
+      mBuffer[mBufferPos] = c;
+      mBufferPos++;
     }
-    mBufferPos = 0;
-  } 
-  else {
-    // buffer the character up for sending later
-    mBuffer[mBufferPos] = c;
-    mBufferPos++;
   }
   return 1;
 }
 
 void EspMultiLogger::setLogLevel(LogLevel level){
-    mLevel = level;
+    AllLevel = level;
 }
 
 void EspMultiLogger::initLogger(){
