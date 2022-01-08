@@ -2,7 +2,7 @@
 #define __esp_multi_logger_h__
 
 // inspired from https://github.com/atomic14/ESP32RemoteLogging
-
+#include <ESP8266WiFi.h>
 enum LogLevel {
   Error = 3,
   Warning = 4,
@@ -13,18 +13,19 @@ enum LogLevel {
 
 #define BUFFER_SIZE 200
 
-class EspMultiLogger: public Print  {
+class EspMultiLogger: public Print {
   private:
     LogLevel mLevel;
-
     uint8_t mBuffer[BUFFER_SIZE];
     int mBufferPos;
-    
+    static inline LogLevel AllLevel; 
   public:
     static void initLogger();
+    static void loopLogger();
+    static void setLogLevel(LogLevel level);
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
-    void setLogLevel(LogLevel);
+
 };
 
 #endif
