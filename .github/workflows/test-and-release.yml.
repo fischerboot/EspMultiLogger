@@ -1,1 +1,50 @@
-.github/workflows/test-and-release.yml.
+name: Test and Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: |
+        arduino-cli lib install "WiFi"
+        arduino-cli lib install "ArduinoUnit"
+
+    - name: Compile sketch
+      run: arduino-cli compile --fqbn arduino:avr:uno src/EspMultiLogger
+
+    - name: Run unit tests
+      run: arduino-cli test --fqbn arduino:avr:uno test/test_EspMultiLogger.cpp
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          path/to/your/binaries/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
