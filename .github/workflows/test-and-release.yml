@@ -33,7 +33,6 @@ jobs:
 
     - name: Run unit tests
       run: arduino-cli test --fqbn esp8266:esp8266:generic test/test_espmultilogger.cpp
-      # ^^^ Use the same board for tests as for build
 
   release:
     needs: build
@@ -49,7 +48,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          build/esp8266.esp8266.generic/src/EspMultiLogger.bin
-          # ^^^ Use the actual output path from arduino-cli compile
+          build/esp8266.esp8266.generic/examples/main.cpp.bin
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
