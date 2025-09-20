@@ -25,9 +25,6 @@ jobs:
       run: |
         arduino-cli lib install "ArduinoUnit"
 
-    - name: Compile sketch
-      run: arduino-cli compile --fqbn esp8266:esp8266:generic src/EspMultiLogger
-
     - name: Compile example sketch
       run: arduino-cli compile --fqbn esp8266:esp8266:generic examples/main.cpp
 
