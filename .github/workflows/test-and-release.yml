@@ -19,23 +19,25 @@ jobs:
     - name: Set up Arduino CLI
       uses: arduino/setup-arduino-cli@v1
       with:
-        version: 0.19.0  # Geben Sie hier eine feste Version an
+        version: 0.19.0
 
     - name: Install dependencies
       run: |
-        arduino-cli lib install "WiFi"
+        arduino-cli lib install "ESP8266WiFi"
         arduino-cli lib install "ArduinoUnit"
 
     - name: Compile sketch
       run: arduino-cli compile --fqbn esp8266:esp8266:generic src/EspMultiLogger
 
     - name: Run unit tests
-      run: arduino-cli test --fqbn arduino:avr:uno test/test_EspMultiLogger.cpp
+      run: arduino-cli test --fqbn esp8266:esp8266:generic test/test_EspMultiLogger.cpp
+      # ^^^ Use the same board for tests as for build
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
+    # ^^^ Match the branch name with your triggers
 
     steps:
     - name: Checkout repository
@@ -45,6 +47,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          path/to/your/binaries/*
+          build/esp8266.esp8266.generic/src/EspMultiLogger.ino.bin
+          # ^^^ Use the actual output path from arduino-cli compile
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
