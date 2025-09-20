@@ -1,8 +1,8 @@
 {
     "name": "EspMultiLogger",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "owner": "Marcel Fischer",
-    "repository":"https://github.com/fischerboot/EspMultiLogger"
+    "repository":
     {
      "type": "git",
      "url": "https://github.com/fischerboot/EspMultiLogger.git"
