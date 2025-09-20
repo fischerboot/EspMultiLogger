@@ -24,9 +24,6 @@ jobs:
     - name: Install PlatformIO
       run: pip install platformio
 
-    - name: create PlatformIO project
-      run: platformio project init
-      
     - name: Build project
       run: pio run
 
