@@ -2,8 +2,6 @@ name: Test and Release
 
 on:
   push:
-    tags:
-      - '*'
     branches:
       - master
   pull_request:
