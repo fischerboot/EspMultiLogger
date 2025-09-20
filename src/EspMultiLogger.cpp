@@ -79,6 +79,10 @@ void EspMultiLogger::initLogger(){
   TelnetServer.setNoDelay(true);
 }
 
+void EspMultiLogger::setUserVersionString(const char* version) {
+    userVersionString = version;
+}
+
 void EspMultiLogger::loopLogger(){
   // todo generic implementation for loop
    // Cleanup disconnected session
@@ -118,7 +122,12 @@ void EspMultiLogger::loopLogger(){
 
         TelnetClient[i].print("ESPMultiLogger Version: ");
         TelnetClient[i].println("0.0.3"); // todo automate this with json.
-        
+
+        if (userVersionString) { // Print user version string if set
+          TelnetClient[i].print("User Version: ");
+          TelnetClient[i].println(userVersionString);
+        }
+
         TelnetClient[i].println("----------------------------------------------------------------");
         
         ConnectionEstablished = true; 
