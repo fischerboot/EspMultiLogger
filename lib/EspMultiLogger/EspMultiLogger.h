@@ -30,4 +30,11 @@ class EspMultiLogger: public Print {
 
 };
 
+#ifndef MAX_TELNET_CLIENTS
+#define MAX_TELNET_CLIENTS 2 // or your preferred default
+#endif
+
+extern WiFiServer TelnetServer;
+extern WiFiClient TelnetClient[MAX_TELNET_CLIENTS];
+
 #endif

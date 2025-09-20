@@ -9,7 +9,7 @@
 #define logTimeout (1800) // 60 min * 60sec = 1 std
 #endif 
 
-#define MAX_TELNET_CLIENTS 2
+//#define MAX_TELNET_CLIENTS 4
 
 const uint16_t TelnetPort = 23;
 uint8_t i;

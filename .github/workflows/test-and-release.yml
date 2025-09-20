@@ -25,10 +25,10 @@ jobs:
       run: pip install platformio
 
     - name: Build project
-      run: pio run
+      run: pio run 
 
     - name: Run unit tests
-      run: pio test
+      run: pio test --without-uploading
 
   release:
     needs: build

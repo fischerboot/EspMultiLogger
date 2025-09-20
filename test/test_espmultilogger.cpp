@@ -2,41 +2,29 @@
 #include <unity.h>
 #include "EspMultiLogger.h"
 
+#ifndef MAX_TELNET_CLIENTS
+#define MAX_TELNET_CLIENTS 4
+#endif
+
 // Mock the WiFiClient and WiFiServer for the tests
 class MockWiFiClient : public WiFiClient {
 public:
-    bool connected() override {
-        return true;
-    }
-    size_t println(const char* message) override {
-        return strlen(message);
-    }
-    size_t print(const char* message) override {
-        return strlen(message);
-    }
-    int available() override {
-        return 0;
-    }
-    int read() override {
-        return -1;
-    }
+    uint8_t connected() override { return 1; }
+    size_t println(const char* message) { return 0; }
+    size_t print(const char* message) { return 0; }
 };
 
 class MockWiFiServer : public WiFiServer {
 public:
     MockWiFiServer(uint16_t port) : WiFiServer(port) {}
-    WiFiClient available() override {
-        return MockWiFiClient();
-    }
+    WiFiClient available(uint8_t* status = NULL) { return WiFiClient(); }
 };
 
-MockWiFiServer TelnetServer(23);
-MockWiFiClient TelnetClient[MAX_TELNET_CLIENTS];
 
-EspMultiLogger logger(INFO);
+EspMultiLogger logger(Info);
 
 void test_write_function() {
-    logger.setLogLevel(INFO);
+    logger.setLogLevel(Info);
     logger.initLogger();
 
     // Test writing a single character
