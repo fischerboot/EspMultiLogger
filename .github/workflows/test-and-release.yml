@@ -23,7 +23,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        arduino-cli lib install "ESP8266WiFi"
         arduino-cli lib install "ArduinoUnit"
 
     - name: Compile sketch
