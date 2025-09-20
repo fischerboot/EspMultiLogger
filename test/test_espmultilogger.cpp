@@ -35,10 +35,22 @@ void test_write_function() {
     result = logger.write('\n');
     TEST_ASSERT_EQUAL(1, result);
 }
+void test_write_function2() {
+    logger.setLogLevel(Info);
+    logger.initLogger();
 
+    // Test writing a single character
+    size_t result = logger.write('B');
+    TEST_ASSERT_EQUAL(1, result);
+
+    // Test writing a newline character
+    result = logger.write('C');
+    TEST_ASSERT_EQUAL(1, result);
+}
 void setup() {
     UNITY_BEGIN();
     RUN_TEST(test_write_function);
+    RUN_TEST(test_write_function2);
     UNITY_END();
 }
 

@@ -1,6 +1,7 @@
 // inspired from https://github.com/atomic14/ESP32RemoteLogging
 #include <Arduino.h>
 #include <EspMultiLogger.h>
+#include "version.h"
 
 
 #define LoggingWithTimeout
@@ -121,7 +122,7 @@ void EspMultiLogger::loopLogger(){
         TelnetClient[i].println(ESP.getFreeHeap());
 
         TelnetClient[i].print("ESPMultiLogger Version: ");
-        TelnetClient[i].println("0.0.3"); // todo automate this with json.
+        TelnetClient[i].println(ESPMULTILOGGER_VERSION);
 
         if (userVersionString) { // Print user version string if set
           TelnetClient[i].print("User Version: ");
