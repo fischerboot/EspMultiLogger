@@ -16,10 +16,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-   - name: Set up Arduino CLI
-     uses: arduino/setup-arduino-cli@v1
-     with:
-       version: 0.19.0  # Geben Sie hier eine feste Version an
+    - name: Set up Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+      with:
+        version: 0.19.0  # Geben Sie hier eine feste Version an
 
     - name: Install dependencies
       run: |
