@@ -5,7 +5,6 @@
 
 #include <Arduino.h>
 #include <EspMultiLogger.h>
-#include "WlanConfig.h"
 /*
 Configuration
 */
