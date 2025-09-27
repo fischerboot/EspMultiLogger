@@ -21,6 +21,7 @@ WiFiClient TelnetClient[MAX_TELNET_CLIENTS];
 EspMultiLogger::EspMultiLogger(LogLevel level) {
   mLevel = level;
   mBufferPos = 0;
+  userVersionString[0] = 0; // Define and initialize
 }
 
 size_t EspMultiLogger::write(uint8_t c) {
@@ -80,8 +81,15 @@ void EspMultiLogger::initLogger(){
   TelnetServer.setNoDelay(true);
 }
 
+
+
 void EspMultiLogger::setUserVersionString(const char* version) {
-    userVersionString = version;
+    if (version) {
+        strncpy(userVersionString, version, sizeof(userVersionString) - 1);
+        userVersionString[sizeof(userVersionString) - 1] = '\0';
+    } else {
+        userVersionString[0] = '\0';
+    }
 }
 
 void EspMultiLogger::loopLogger(){
