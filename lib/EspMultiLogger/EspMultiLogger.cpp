@@ -18,6 +18,8 @@ bool ConnectionEstablished; // Flag for successfully handled connection
 WiFiServer TelnetServer(TelnetPort);
 WiFiClient TelnetClient[MAX_TELNET_CLIENTS];
 
+TelnetWelcomeCallback EspMultiLogger::welcomeCallback = nullptr;
+
 EspMultiLogger::EspMultiLogger(LogLevel level) {
   mLevel = level;
   mBufferPos = 0;
@@ -92,6 +94,10 @@ void EspMultiLogger::setUserVersionString(const char* version) {
     }
 }
 
+void EspMultiLogger::setTelnetWelcomeCallback(TelnetWelcomeCallback cb) {
+    welcomeCallback = cb;
+}
+
 void EspMultiLogger::loopLogger(){
   // todo generic implementation for loop
    // Cleanup disconnected session
@@ -153,6 +159,10 @@ void EspMultiLogger::loopLogger(){
         
         ConnectionEstablished = true; 
         
+        if (welcomeCallback) {
+            welcomeCallback(TelnetClient[i]);
+        }
+
         break;
       }
       else

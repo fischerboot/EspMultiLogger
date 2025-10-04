@@ -13,6 +13,8 @@ enum LogLevel {
 
 #define BUFFER_SIZE 200
 
+typedef void (*TelnetWelcomeCallback)(WiFiClient& client);
+
 class EspMultiLogger: public Print {
   private:
     LogLevel mLevel;
@@ -21,10 +23,12 @@ class EspMultiLogger: public Print {
     static inline LogLevel AllLevel;
     static inline char userVersionString[64]; // Changed: now a buffer, not a pointer
   public:
+    static TelnetWelcomeCallback welcomeCallback;
     static void initLogger();
     static void loopLogger();
     static void setLogLevel(LogLevel level);
     static void setUserVersionString(const char* version); // Unchanged
+    static void setTelnetWelcomeCallback(TelnetWelcomeCallback cb);
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
 
