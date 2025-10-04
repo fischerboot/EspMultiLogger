@@ -125,7 +125,19 @@ void EspMultiLogger::loopLogger(){
         
         TelnetClient[i].print("Millis since start: ");
         TelnetClient[i].println(millis());
-        
+
+        unsigned long ms = millis();
+        unsigned long seconds = ms / 1000;
+        unsigned long minutes = seconds / 60;
+        unsigned long hours = minutes / 60;
+        unsigned long days = hours / 24;
+
+        TelnetClient[i].print("Uptime: ");
+        TelnetClient[i].print(days); TelnetClient[i].print("d ");
+        TelnetClient[i].print(hours % 24); TelnetClient[i].print("h ");
+        TelnetClient[i].print(minutes % 60); TelnetClient[i].print("m ");
+        TelnetClient[i].print(seconds % 60); TelnetClient[i].println("s");
+
         TelnetClient[i].print("Free Heap RAM: ");
         TelnetClient[i].println(ESP.getFreeHeap());
 
