@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <EspMultiLogger.h>
 #include "version.h"
+#include <time.h>
 
 
 #define LoggingWithTimeout
@@ -62,36 +63,44 @@ void EspMultiLogger::printLogCache(WiFiClient& client) {
 }
 
 size_t EspMultiLogger::write(uint8_t c) {
-  // only print if the instance loglevel is lower or equal than the overall loglevel.
   if(mLevel<=AllLevel){
-    // check to see if we've reached the end of our buffer or received a newline character
     if (c == '\n' || mBufferPos >= BUFFER_SIZE - 1) {
-      // add a null terminating byte to the buffer
       mBuffer[mBufferPos] = '\0';
       
-      // Add timestamp and format message for cache
+      // Create timestamp (try NTP time first, fallback to millis)
       char timestampedMessage[LOG_MESSAGE_MAX_LENGTH];
-      unsigned long ms = millis();
-      unsigned long seconds = ms / 1000;
-      unsigned long minutes = seconds / 60;
-      unsigned long hours = minutes / 60;
+      time_t now = time(nullptr);
       
-      snprintf(timestampedMessage, sizeof(timestampedMessage), 
-              "[%02lu:%02lu:%02lu] %s\r\n", 
-              hours % 24, minutes % 60, seconds % 60, 
-              (char*)mBuffer);
+      if (now > 8 * 3600 * 2) { // Valid NTP time available
+        struct tm* timeinfo = localtime(&now);
+        snprintf(timestampedMessage, sizeof(timestampedMessage), 
+                "[%04d-%02d-%02d %02d:%02d:%02d] %s\r\n",
+                timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
+                timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec,
+                (char*)mBuffer);
+      } else { // Fallback to millis-based timestamp
+        unsigned long ms = millis();
+        unsigned long seconds = ms / 1000;
+        unsigned long minutes = seconds / 60;
+        unsigned long hours = minutes / 60;
+        
+        snprintf(timestampedMessage, sizeof(timestampedMessage), 
+                "[%02lu:%02lu:%02lu] %s\r\n", 
+                hours % 24, minutes % 60, seconds % 60, 
+                (char*)mBuffer);
+      }
       
       // Add to cache
       addToLogCache(timestampedMessage);
       
-      // send the message to logger
+      // Send to Serial
       if (c == '\n') {
         Serial.println((const char *) mBuffer);
       } else {
         Serial.print((const char *) mBuffer);
       }
       
-      // send message to telnet
+      // Send to Telnet clients
       for(i = 0; i < MAX_TELNET_CLIENTS; i++) {
         if (TelnetClient[i] && TelnetClient[i].connected()) {
           if (c == '\n') {
@@ -103,12 +112,11 @@ size_t EspMultiLogger::write(uint8_t c) {
       }
       
       if (c == '\n') {
-        delay(10);  // to avoid strange characters left in buffer
+        delay(10);
       }
       
       mBufferPos = 0;
     } else {
-      // buffer the character up for sending later
       mBuffer[mBufferPos] = c;
       mBufferPos++;
     }
@@ -145,38 +153,38 @@ void EspMultiLogger::setTelnetWelcomeCallback(TelnetWelcomeCallback cb) {
 }
 
 void EspMultiLogger::loopLogger(){
-  // todo generic implementation for loop
-   // Cleanup disconnected session
+  // Cleanup disconnected sessions
   for(i = 0; i < MAX_TELNET_CLIENTS; i++)
   {
     if (TelnetClient[i] && !TelnetClient[i].connected())
     {
       Serial.print("Client disconnected ... terminate session "); Serial.println(i+1); 
       TelnetClient[i].stop();
+      TelnetClient[i] = WiFiClient(); // Reset the client object to invalid state
     }
   }
   
   // Check new client connections
   if (TelnetServer.hasClient()) {
-        for(i = 0; i < MAX_TELNET_CLIENTS; i++) {
-            if (!TelnetClient[i]) {
-                // Fix deprecated warning:
-                TelnetClient[i] = TelnetServer.accept(); // Changed from available() to accept()
-                
-                Serial.print("New Telnet client connected to session ");
-                Serial.println(i);
-                
-                // Print welcome message first
-                if (welcomeCallback) {
-                    welcomeCallback(TelnetClient[i]);
-                }
-                
-                // Then print log cache
-                printLogCache(TelnetClient[i]);
-                
-                ConnectionEstablished = true;
-                break;
-            }
+    for(i = 0; i < MAX_TELNET_CLIENTS; i++) {
+      if (!TelnetClient[i] || !TelnetClient[i].connected()) { // Check both conditions
+        // Fix deprecated warning:
+        TelnetClient[i] = TelnetServer.accept(); // Changed from available() to accept()
+        
+        Serial.print("New Telnet client connected to session ");
+        Serial.println(i+1);
+        
+        // Print welcome message first
+        if (welcomeCallback) {
+          welcomeCallback(TelnetClient[i]);
         }
+        
+        // Then print log cache
+        printLogCache(TelnetClient[i]);
+        
+        ConnectionEstablished = true;
+        break;
+      }
     }
   }
+}
