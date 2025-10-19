@@ -26,42 +26,88 @@ EspMultiLogger::EspMultiLogger(LogLevel level) {
   userVersionString[0] = 0; // Define and initialize
 }
 
+// Remove these lines (they are already defined as static inline in the header):
+// char EspMultiLogger::logCache[LOG_CACHE_SIZE][LOG_MESSAGE_MAX_LENGTH];
+// int EspMultiLogger::logCacheIndex = 0;
+// int EspMultiLogger::logCacheCount = 0;
+
+// Keep only the userVersionString definition if it's not inline:
+
+void EspMultiLogger::addToLogCache(const char* message) {
+    // Copy message to cache (circular buffer)
+    strncpy(logCache[logCacheIndex], message, LOG_MESSAGE_MAX_LENGTH - 1);
+    logCache[logCacheIndex][LOG_MESSAGE_MAX_LENGTH - 1] = '\0';
+    
+    logCacheIndex = (logCacheIndex + 1) % LOG_CACHE_SIZE;
+    if (logCacheCount < LOG_CACHE_SIZE) {
+        logCacheCount++;
+    }
+}
+
+void EspMultiLogger::printLogCache(WiFiClient& client) {
+    client.print("=== Last "); client.print(logCacheCount); client.print(" Log Messages ===\r\n");
+    
+    int startIndex;
+    if (logCacheCount < LOG_CACHE_SIZE) {
+        startIndex = 0;
+    } else {
+        startIndex = logCacheIndex;
+    }
+    
+    for (int i = 0; i < logCacheCount; i++) {
+        int index = (startIndex + i) % LOG_CACHE_SIZE;
+        client.print(logCache[index]);
+    }
+    client.print("==============================\r\n");
+}
+
 size_t EspMultiLogger::write(uint8_t c) {
   // only print if the instance loglevel is lower or equal than the overall loglevel.
   if(mLevel<=AllLevel){
-  //  if(true){
-  // check to see if we've reached the end of our buffer or received a newline character
-    if (c == '\n' ) {
+    // check to see if we've reached the end of our buffer or received a newline character
+    if (c == '\n' || mBufferPos >= BUFFER_SIZE - 1) {
       // add a null terminating byte to the buffer
-      mBuffer[mBufferPos] = 0;
-      // send line to logger
-      Serial.println((const char *) mBuffer);
-      // send line to telnet
-      for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-      {
-        if (TelnetClient[i] || TelnetClient[i].connected())
-        {
-          TelnetClient[i].println((const char *)mBuffer);
-        }
-      }
-    delay(10);  // to avoid strange characters left in buffer
-      mBufferPos = 0;
-    }else if(mBufferPos == BUFFER_SIZE - 1){
-      // add a null terminating byte to the buffer
-      mBuffer[mBufferPos] = 0;
+      mBuffer[mBufferPos] = '\0';
+      
+      // Add timestamp and format message for cache
+      char timestampedMessage[LOG_MESSAGE_MAX_LENGTH];
+      unsigned long ms = millis();
+      unsigned long seconds = ms / 1000;
+      unsigned long minutes = seconds / 60;
+      unsigned long hours = minutes / 60;
+      
+      snprintf(timestampedMessage, sizeof(timestampedMessage), 
+              "[%02lu:%02lu:%02lu] %s\r\n", 
+              hours % 24, minutes % 60, seconds % 60, 
+              (char*)mBuffer);
+      
+      // Add to cache
+      addToLogCache(timestampedMessage);
+      
       // send the message to logger
-      Serial.print((const char *) mBuffer);
-      //send message to telnet
-      for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-      {
-        if (TelnetClient[i] || TelnetClient[i].connected())
-        {
-          TelnetClient[i].print((const char *)mBuffer);
+      if (c == '\n') {
+        Serial.println((const char *) mBuffer);
+      } else {
+        Serial.print((const char *) mBuffer);
+      }
+      
+      // send message to telnet
+      for(i = 0; i < MAX_TELNET_CLIENTS; i++) {
+        if (TelnetClient[i] && TelnetClient[i].connected()) {
+          if (c == '\n') {
+            TelnetClient[i].println((const char *)mBuffer);
+          } else {
+            TelnetClient[i].print((const char *)mBuffer);
+          }
         }
       }
+      
+      if (c == '\n') {
+        delay(10);  // to avoid strange characters left in buffer
+      }
+      
       mBufferPos = 0;
-    } 
-    else {
+    } else {
       // buffer the character up for sending later
       mBuffer[mBufferPos] = c;
       mBufferPos++;
@@ -111,88 +157,26 @@ void EspMultiLogger::loopLogger(){
   }
   
   // Check new client connections
-  if (TelnetServer.hasClient())
-  {
-    ConnectionEstablished = false; // Set to false
-    
-    for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-    {
-      // Serial.print("Checking telnet session "); Serial.println(i+1);
-      
-      // find free socket
-      if (!TelnetClient[i])
-      {
-        TelnetClient[i] = TelnetServer.available(); 
-        
-        Serial.print("New Telnet client connected to session "); Serial.println(i+1);
-        
-        TelnetClient[i].flush();  // clear input buffer, else you get strange characters
-        TelnetClient[i].println("Welcome!");
-        
-        TelnetClient[i].print("Millis since start: ");
-        TelnetClient[i].println(millis());
-
-        unsigned long ms = millis();
-        unsigned long seconds = ms / 1000;
-        unsigned long minutes = seconds / 60;
-        unsigned long hours = minutes / 60;
-        unsigned long days = hours / 24;
-
-        TelnetClient[i].print("Uptime: ");
-        TelnetClient[i].print(days); TelnetClient[i].print("d ");
-        TelnetClient[i].print(hours % 24); TelnetClient[i].print("h ");
-        TelnetClient[i].print(minutes % 60); TelnetClient[i].print("m ");
-        TelnetClient[i].print(seconds % 60); TelnetClient[i].println("s");
-
-        TelnetClient[i].print("Free Heap RAM: ");
-        TelnetClient[i].println(ESP.getFreeHeap());
-
-        TelnetClient[i].print("ESPMultiLogger Version: ");
-        TelnetClient[i].println(ESPMULTILOGGER_VERSION);
-
-        if (userVersionString) { // Print user version string if set
-          TelnetClient[i].print("User Version: ");
-          TelnetClient[i].println(userVersionString);
+  if (TelnetServer.hasClient()) {
+        for(i = 0; i < MAX_TELNET_CLIENTS; i++) {
+            if (!TelnetClient[i]) {
+                // Fix deprecated warning:
+                TelnetClient[i] = TelnetServer.accept(); // Changed from available() to accept()
+                
+                Serial.print("New Telnet client connected to session ");
+                Serial.println(i);
+                
+                // Print welcome message first
+                if (welcomeCallback) {
+                    welcomeCallback(TelnetClient[i]);
+                }
+                
+                // Then print log cache
+                printLogCache(TelnetClient[i]);
+                
+                ConnectionEstablished = true;
+                break;
+            }
         }
-
-        TelnetClient[i].println("----------------------------------------------------------------");
-        
-        ConnectionEstablished = true; 
-        
-        if (welcomeCallback) {
-            welcomeCallback(TelnetClient[i]);
-        }
-
-        break;
-      }
-      else
-      {
-        // Serial.println("Session is in use");
-      }
-    }
-
-    if (ConnectionEstablished == false)
-    {
-      Serial.println("No free sessions ... drop connection");
-      TelnetServer.available().stop();
-      // TelnetMsg("An other user cannot connect ... MAX_TELNET_CLIENTS limit is reached!");
     }
   }
-
-  for(i = 0; i < MAX_TELNET_CLIENTS; i++)
-  {
-    if (TelnetClient[i] && TelnetClient[i].connected())
-    {
-      if(TelnetClient[i].available())
-      { 
-        //get data from the telnet client
-        while(TelnetClient[i].available())
-        {
-          // todo add remote loglevel parser 
-          // uncommenting this command result in a crash!
-          Serial.write(TelnetClient[i].read());
-        }
-      }
-    }
-  }
-}

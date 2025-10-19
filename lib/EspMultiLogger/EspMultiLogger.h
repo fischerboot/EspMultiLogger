@@ -12,6 +12,8 @@ enum LogLevel {
 };
 
 #define BUFFER_SIZE 200
+#define LOG_CACHE_SIZE 10
+#define LOG_MESSAGE_MAX_LENGTH 128
 
 typedef void (*TelnetWelcomeCallback)(WiFiClient& client);
 
@@ -22,6 +24,14 @@ class EspMultiLogger: public Print {
     int mBufferPos;
     static inline LogLevel AllLevel;
     static inline char userVersionString[64]; // Changed: now a buffer, not a pointer
+    
+    // Log cache for recent messages
+    static inline char logCache[LOG_CACHE_SIZE][LOG_MESSAGE_MAX_LENGTH];
+    static inline int logCacheIndex;
+    static inline int logCacheCount;
+    
+    void addToLogCache(const char* message);
+    
   public:
     static TelnetWelcomeCallback welcomeCallback;
     static void initLogger();
@@ -29,6 +39,8 @@ class EspMultiLogger: public Print {
     static void setLogLevel(LogLevel level);
     static void setUserVersionString(const char* version); // Unchanged
     static void setTelnetWelcomeCallback(TelnetWelcomeCallback cb);
+    static void printLogCache(WiFiClient& client);
+    
     EspMultiLogger(LogLevel level);
     size_t write(uint8_t c);
 
